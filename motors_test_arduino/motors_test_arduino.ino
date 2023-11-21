@@ -1,7 +1,7 @@
 #define BRAKE       26
 
 #define DIR1        4
-#define PWM1        32
+#define PWM1        3
 
 #define TIMER_BIT  8
 #define BASE_FREQ  20000
