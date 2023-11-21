@@ -25,22 +25,22 @@ void setup() {
   digitalWrite(BRAKE, HIGH);
   
   pinMode(DIR1, OUTPUT);
-  Motor1_control(0);
+  Motor_control(0);
   
   delay(2000);
 }
 
 void loop() {
-    Motor1_control(10);
+    Motor_control(10);
     delay(2000);
-    Motor1_control(30);
+    Motor_control(30);
     delay(2000);
-    Motor1_control(0);
+    Motor_control(0);
     delay(2000);
-    Motor1_control(-10);
+    Motor_control(-10);
     delay(2000);
-    Motor1_control(-30);
+    Motor_control(-30);
     delay(2000);
-    Motor1_control(0);
+    Motor_control(0);
     delay(2000);
 }
