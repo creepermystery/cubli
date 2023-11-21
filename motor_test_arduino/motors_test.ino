@@ -4,14 +4,6 @@
 #define PWM1        32
 #define PWM1_CH     1
 
-#define DIR2        15
-#define PWM2        25
-#define PWM2_CH     0
-
-#define DIR3        5
-#define PWM3        18
-#define PWM3_CH     2
-
 #define TIMER_BIT  8
 #define BASE_FREQ  20000
 
