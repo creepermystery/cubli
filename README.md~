@@ -8,4 +8,3 @@ We plan two projects :
 - Second we will do the full scale version
 
 We also planned a simple motor testing program.
-All the project will be done on Arduino since this is the board we have with us. If you want to replicate this with an ESP32, you will have to modify several things, including using the led PWM functionnality.
