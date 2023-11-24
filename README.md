@@ -1,6 +1,6 @@
 # Self-Balancing-Cube
 
-ESP32, MPU6050, Nidec 24H brushless motors, 500 mAh LiPo battery.
+Arduino, MPU6050, Nidec 24H brushless motors, 500 mAh LiPo battery.
 
 Balancing controllers can be tuned remotely over bluetooth.
 
