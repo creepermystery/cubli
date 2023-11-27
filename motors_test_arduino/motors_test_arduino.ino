@@ -31,21 +31,15 @@ void setup() {
 
 void loop() {
     Motor_control(10);
-    printf("2");
     delay(2000);
     Motor_control(30);
-    printf("2");
     delay(2000);
     Motor_control(0);
-    printf("2");
     delay(2000);
     Motor_control(-10);
-    printf("2");
     delay(2000);
     Motor_control(-30);
-    printf("2");
     delay(2000);
     Motor_control(0);
-    printf("2");
     delay(2000);
 }
