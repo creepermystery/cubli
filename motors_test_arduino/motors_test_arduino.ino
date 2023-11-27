@@ -2,6 +2,7 @@
 #define DIR         4
 #define PWM         3
 #define START       8
+
 int temps=0;
 void Motor_control(int sp) {
   if (sp < 0) {
@@ -36,6 +37,6 @@ void loop() {
   else if(millis()-temps>8000 && millis()-temps<10000){
   Motor_control(20);}
   //si on veut que ça recommence
-  /*elseif(millis()-temps>10000){
-  temps=milis();}*/
+  else if(millis()-temps>10000){
+  temps=millis();}
   }
