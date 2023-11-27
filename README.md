@@ -1,45 +1,11 @@
 # Self-Balancing-Cube
 
-Arduino, MPU6050, Nidec 24H brushless motors, 500 mAh LiPo battery.
+Our version of the software for the self-balancing cube, simplified and modified for our needs.
+It is planned to add a mechanical brake in the future in order to allow the cube to stand ub by himself.
 
-Balancing controllers can be tuned remotely over bluetooth.
+We plan two projects :
+- First we will do a 1-axis version of the project to experiment with the circuit and values we should use
+- Second we will do the full scale version
 
-Example:
-
-Send p+ (or p+p+p+p+p+p+p+) for increase K1.
-
-Send p- (or p-p-p-p-p-p-p-) for decrease K1.
-
-The same for K2, K3. Send "i", "s".
-
-<img src="/pictures/cube1.jpg" alt="Self-Balancing-Cube"/>
-
-<img src="/pictures/schematic.png" alt="Self-Balancing-Cube-Schematic"/>
-
-About schematic:
-
-Battery: 3S1P LiPo (11.1V). 
-Buzzer: any 5V active buzzer.
-Voltage regulator: any 5V regulator (7805).
-All red connections not nescesary for this project! But if you are designing a PCB I recommend making these connections. Maybe I use encoders in the future, you will be able to use the new firmware without any changes.
- 
-How to build:
-
-https://youtu.be/AJQZFHJzwt4
-
-If something doesn't work, try the motors test sketch. It tests all motors, rotation directions and speeds. This helps you understand the problem is in software or in hardware.
-
-You can also make this balancing cube with Arduino nano controller. All other parts remain the same.
-
-<img src="/pictures/arduino_schematic.png" alt="Self-Balancing-Cube-Schematic"/>
-
-In this version I make offsets setting procedure more simple. First connect to controller over bluetooth. 
-You will see a message that you need to calibrate the balancing points. Send c+ from serial monitor. This activate calibrating procedure. 
-Set the cube to one of balancing points (edge or vertex). Hold still when the cube does not fall to either side. Send c- from serial monitor. 
-This will write the offsets to the EEPROM. Repeat this procedure four times (3 edges and vertex). After calibrating all offsets, the cube will begin to balance.
-
-ESP32 version also has an updated balancing point setting procedure. Important! In this video you can learn how to set the balancing points:
-
-https://youtu.be/Nkm9PoihZOI
-
-
+We also planned a simple motor testing program.
+All the project will be done on Arduino since this is the board we have with us. If you want to replicate this with an ESP32, you will have to modify several things, including using the led PWM functionnality.
