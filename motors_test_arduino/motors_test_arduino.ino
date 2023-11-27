@@ -1,6 +1,7 @@
 #define BRAKE       2
 #define DIR         4
 #define PWM         3
+#define START       8
 
 void pwmSet(uint8_t concerned_pin, uint32_t value) {
   analogWrite(concerned_pin, value);
@@ -18,10 +19,13 @@ void Motor_control(int sp) {
 
 void setup() {
   pinMode(BRAKE, OUTPUT);
+  pinMode(PWM, OUTPUT);
+  pinMode(START, OUTPUT);
+  digitalWrite(START, HIGH);
   digitalWrite(BRAKE, HIGH);
   
   pinMode(DIR, OUTPUT);
-  Motor_control(0);
+  analogWrite(3, 0);
   delay(2000);
 }
 
