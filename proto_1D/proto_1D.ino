@@ -103,7 +103,7 @@ MPU6050 mpu;
 // is present in this case). Could be quite handy in some cases.
 //#define OUTPUT_READABLE_WORLDACCEL
 
-#define BRAKE 5
+#define BRAKE 7
 #define PWM 3
 #define DIR 4
 #define START 8
@@ -229,10 +229,10 @@ void setup() {
 
     // configure LED for output
     pinMode(LED_PIN, OUTPUT);
-    pinMode(PWM, OUPUT);
-    pinMode(BRAKE, OUPUT);
-    pinMode(DIR, OUPUT);
-    pinMode(START, OUPUT);
+    pinMode(PWM, OUTPUT);
+    pinMode(BRAKE, OUTPUT);
+    pinMode(DIR, OUTPUT);
+    pinMode(START, OUTPUT);
 
     digitalWrite(BRAKE, HIGH);
     digitalWrite(START, HIGH);
@@ -260,20 +260,34 @@ void loop() {
         Serial.print(ypr[1] * 180/M_PI);
         Serial.print("\t");
         Serial.print(ypr[2] * 180/M_PI);
-        let speed = (ypr[0]*M_PI/180)/(20*M_PI/180)
-        let power = 254*speed
-        Serial.print("spd")
-        Serial.println(power)
-        if (power >= 0) {
-            digitalWrite(DIR, HIGH)
-        } else {
-            power = -power
-            digitalWrite(DIR, LOW)
-        }
 
-	    if (power > 254) {
-            power = 254
+        int32_t yaw_value = ypr[0]*180/M_PI;
+        int32_t power = (90/15)*254*yaw_value/(180/M_PI);
+        Serial.print("\t");
+        Serial.print(power);
+        if (power > 254){
+            power = 254;
+            Serial.print("\t maxed");
+            Serial.print("\t");
+            Serial.print(power);
+        } else if (power < -254) {
+            power = -254;
+            Serial.print("\t maxed");
+            Serial.print("\t");
+            Serial.print(power);
         }
-        analogWrite(PWM, power);
+        if ((yaw_value < 15) && (yaw_value > 0)) {
+            digitalWrite(DIR, HIGH);
+            digitalWrite(BRAKE, HIGH);
+            analogWrite(PWM, power);
+        } else if ((yaw_value > -15) && (yaw_value < 0)) {
+            power = -power;
+            digitalWrite(DIR, LOW);
+            digitalWrite(BRAKE, HIGH);
+            analogWrite(PWM, power);
+        } else {
+            digitalWrite(BRAKE, LOW);
+        }
+        Serial.println("");
     }
 }

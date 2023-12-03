@@ -27,9 +27,9 @@ int16_t accX, accY, accZ, gyroX, gyroY, gyroZ; // 6DOF 3-axis acceleration and 3
 
 //************** Nidec 24H677H010 BLDC Motor Vars ****************
 const int nidecBrake = 8;      // Brake
-const int nidecDirection = 7; // CW/CCW Nidec Motor
+const int nidecDirection = 4; // CW/CCW Nidec Motor
 const int ledsDirection = 6; // Green/Red LED direction indicators
-const int nidecPWM = 9;     // Nidec Motor PWM
+const int nidecPWM = 3;     // Nidec Motor PWM
 float loopOnce=0; // Used to reset Nidec jump-up routine
 //************** End of Nidec 24H677H010 BLDC Motor Vars ****************
 
