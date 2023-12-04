@@ -1,8 +1,8 @@
 #define BRAKE       2
 #define DIR         4
-#define PWM         3
+#define PWM        11
 #define START       8
-int temps=0;
+long temps=0;
 void Motor_control(int sp) {
   if (sp < 0) {
     digitalWrite(DIR, LOW);
@@ -26,16 +26,16 @@ void setup() {
 
 void loop() {
   if(millis()-temps>1000 && millis()-temps<2000){
-  Motor_control(200);}
+  Motor_control(254);}
   else if(millis()-temps>2000 && millis()-temps<4000){
   Motor_control(0);}
   else if(millis()-temps>4000 && millis()-temps<6000){
-  Motor_control(-100);}
+  Motor_control(-254);}
   else if(millis()-temps>6000 && millis()-temps<8000){
   Motor_control(0);}
   else if(millis()-temps>8000 && millis()-temps<10000){
-  Motor_control(20);}
+  Motor_control(254);}
   //si on veut que ça recommence
-  /*elseif(millis()-temps>10000){
-  temps=milis();}*/
+  else if(millis()-temps>10000){
+  temps=millis();}
   }
