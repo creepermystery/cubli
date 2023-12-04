@@ -10,7 +10,6 @@ void setup() {
   pinMode(START, OUTPUT);
   pinMode(DIR, OUTPUT);
 
-  
   analogWrite(PWMR, 20);
   delay(2000);
 }

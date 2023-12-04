@@ -247,49 +247,57 @@ void setup() {
 void loop() {
     // if programming failed, don't try to do anything
     if (!dmpReady) return;
+    int32_t yaw_value = 0;
+    while (true) {  
     // read a packet from FIFO
-    if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet 
+        if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet 
 
-        // display Euler angles in degrees
-        mpu.dmpGetQuaternion(&q, fifoBuffer);
-        mpu.dmpGetGravity(&gravity, &q);
-        mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-        //Serial.print("ypr\t");
-        //Serial.print(ypr[0] * 180/M_PI);
-        //Serial.print("\t");
-        //Serial.print(ypr[1] * 180/M_PI);
-        //Serial.print("\t");
-        //Serial.print(ypr[2] * 180/M_PI);
+            // display Euler angles in degrees
+            mpu.dmpGetQuaternion(&q, fifoBuffer);
+            mpu.dmpGetGravity(&gravity, &q);
+            mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+            Serial.print("ypr\t");
+            Serial.print(ypr[0] * 180/M_PI);
+            Serial.print("\t");
+            Serial.print(ypr[1] * 180/M_PI);
+            Serial.print("\t");
+            Serial.print(ypr[2] * 180/M_PI);
 
-        int yaw_value = ypr[0]*180/M_PI;
-        int power = (45/15)*254*yaw_value/(180/M_PI);
-        Serial.print("\tyaw: ");
-        Serial.print(yaw_value);
-        
-        if (power > 254){
-            power = 254;
-        } else if (power < -254) {
-            power = -254;
+            int32_t prec_yaw = yaw_value;
+            yaw_value = ypr[0]*180/M_PI;
+            int32_t power = (9)*254*yaw_value/(180/M_PI)-3*(yaw_value-prec_yaw);
+            Serial.print("\t");
+            Serial.print(power);
+            Serial.print("\t");
+            Serial.print(yaw_value);
+            
+            if (power > 254){
+                power = 254;
+            } else if (power < -254) {
+                power = -254;
+            }
+
+            if (power > 0) {
+                digitalWrite(DIR, HIGH);
+            } else {
+                digitalWrite(DIR, LOW);
+                power = -power;
+            }
+            
+            Serial.print("\t maxed");
+            Serial.print("\t");
+            Serial.print(power);
+
+            if ((yaw_value > -2) && (yaw_value < 2)) {
+                analogWrite(PWM, 0);
+            } else if ((yaw_value > -25) && (yaw_value < 25)) {
+                digitalWrite(BRAKE, HIGH);
+                analogWrite(PWM, power);
+            } else {
+                analogWrite(PWM, 0);
+            }
+            
+            Serial.println("");
         }
-
-        if (power > 0) {
-            digitalWrite(DIR, LOW);
-            Serial.print("\tdir: D");
-        } else {
-            digitalWrite(DIR, HIGH);
-            power = -power;
-            Serial.print("\tdir: G");
-        }
-
-        if ((yaw_value>25) || (yaw_value<-25)) {
-            power = 0;
-        } else if ((yaw_value>-8) && (yaw_value<8)) {
-            power = 0;
-        }
-        Serial.print("\tpow: ");
-        Serial.print(power);
-        
-        analogWrite(PWM, power);
-        Serial.println("");
     }
 }
