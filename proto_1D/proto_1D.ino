@@ -284,8 +284,7 @@ void loop() {
                 power = -power;
             }
             
-            Serial.print("\t maxed");
-            Serial.print("\t");
+            Serial.print("\t maxed\t");
             Serial.print(power);
 
             if ((yaw_value > -2) && (yaw_value < 2)) {
