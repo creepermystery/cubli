@@ -1,16 +1,16 @@
 #define BRAKE       7
-#define DIR        4
-#define PWMR        3
+#define DIR         4
+#define PWM         3
 #define START       8
 
 void setup() {
   Serial.begin(9600);
   pinMode(BRAKE, OUTPUT);
-  pinMode(PWMR, OUTPUT);
+  pinMode(PWM, OUTPUT);
   pinMode(START, OUTPUT);
   pinMode(DIR, OUTPUT);
 
-  analogWrite(PWMR, 20);
+  analogWrite(PWM, 20);
   delay(2000);
 }
 

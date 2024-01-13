@@ -19,6 +19,7 @@
 //   1  |   1  |   0  | Division de fréquence par 256
 //   1  |   1  |   1  | Division de fréquence par 1024
 // ***************************************************
+
 #define frequencePWMde31372hz 0b00000001
 #define frequencePWMde3921hz  0b00000010
 #define frequencePWMde980hz   0b00000011
@@ -26,30 +27,42 @@
 #define frequencePWMde245hz   0b00000101
 #define frequencePWMde122hz   0b00000110
 #define frequencePWMde30hz    0b00000111
+
 // Nota : ces fréquences sont celles obtenues avec un µC fonctionnant sur un quartz de 16MHz, tout en laissant le Prescaler sur "1" (pas de division de fréquence globale, donc)
+
+#define BRAKE       7
+#define DIR         4
+#define PWM         3
+#define START       8
 
 void setup()  
 { 
-
-  // Déclaration de la broche d'E/S D3 en sortie
-  pinMode(3, OUTPUT);
-
+  pinMode(BRAKE, OUTPUT);
+  pinMode(PWM, OUTPUT);
+  pinMode(START, OUTPUT);
+  pinMode(DIR, OUTPUT);
   
   // Sélection du rapport de division de fréquence du timer 2
   
   TCCR2B &= 0b11111000;               // <===== à ne pas toucher
-  TCCR2B |= frequencePWMde31372hz;    // <===== à changer, selon la fréquence que vous souhaitez en sortie
+  TCCR2B |= frequencePWMde3921hz;    // <===== à changer, selon la fréquence que vous souhaitez en sortie
 
     // Nota 1 : l'opérateur "&=" constitue un "ET logique". Il applique le masque "0b11111000", afin de mettre à 0 les 3 derniers bits du registre TCCR2B, tout en laissant les autres bits intacts
     // Nota 2 : la fonction "|=" constitue un "OU logique". Il applique notre valeur à 8 bits, comme définie tout en haut, afin de modifier les 3 derniers bits du registre TCCR2B, précédemment mis à zéro
-
-
-  // Génération d'un signal PWM sur la sortie D3, avec un rapport cyclique arbitraire, fixé à 33% (en prenant la valeur 85 sur 255, donc)
-  analogWrite(3, 85);
-  
+    digitalWrite(BRAKE, HIGH);
 }
 
 void loop()  
 { 
+  digitalWrite(DIR, HIGH);
+  analogWrite(PWM, 20);
+  delay(2000);
+  analogWrite(PWM, 200);
+  delay(2000);
+  digitalWrite(DIR, LOW);
+  analogWrite(PWM, 20);
+  delay(2000);
+  analogWrite(PWM, 200);
+  delay(2000);
 
 }
