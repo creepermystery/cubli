@@ -50,19 +50,20 @@ void setup()
     // Nota 1 : l'opérateur "&=" constitue un "ET logique". Il applique le masque "0b11111000", afin de mettre à 0 les 3 derniers bits du registre TCCR2B, tout en laissant les autres bits intacts
     // Nota 2 : la fonction "|=" constitue un "OU logique". Il applique notre valeur à 8 bits, comme définie tout en haut, afin de modifier les 3 derniers bits du registre TCCR2B, précédemment mis à zéro
     digitalWrite(BRAKE, HIGH);
+    digitalWrite(START, HIGH);
 }
 
 void loop()  
 { 
   digitalWrite(DIR, HIGH);
-  analogWrite(PWM, 20);
+  analogWrite(PWM, 2);
   delay(2000);
-  analogWrite(PWM, 200);
+  analogWrite(PWM, 20);
   delay(2000);
   digitalWrite(DIR, LOW);
-  analogWrite(PWM, 20);
+  analogWrite(PWM, 2);
   delay(2000);
-  analogWrite(PWM, 200);
+  analogWrite(PWM, 20);
   delay(2000);
 
 }
