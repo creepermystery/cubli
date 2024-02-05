@@ -48,6 +48,7 @@ THE SOFTWARE.
 // for both classes must be in the include path of your project
 #include "I2Cdev.h"
 
+
 #include "MPU6050_6Axis_MotionApps20.h"
 //#include "MPU6050.h" // not necessary if using MotionApps include file
 
@@ -127,6 +128,10 @@ VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measure
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+int prev_yaw=0;
+float Err=0;
+int power=0;
+int Errpow=0;
 
 // packet structure for InvenSense teapot demo
 uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\n' };
@@ -261,16 +266,41 @@ void loop() {
         //Serial.print("\t");
         //Serial.print(ypr[2] * 180/M_PI);
 
-        int yaw_value = ypr[0]*180/M_PI;
-        int power = (45/15)*254*yaw_value/(180/M_PI);
+        int yaw_value = ypr[0]*180/M_PI; //difference avec l'angle 0 entre -90 et +90
+        float dt=3;
+        Err=(yaw_value-prev_yaw);
+
+
         Serial.print("\tyaw: ");
         Serial.print(yaw_value);
-        
+
+        if ((yaw_value<=15) && (yaw_value>=-15)) {
+          power = (255/15)*pow(yaw_value,4)/(180/M_PI);
+          Errpow = (255/15)*pow(Err,4)/(180/M_PI);
+
+          Serial.print(" A ");
+        } //puissance entrée ds le PWM
+        else if ((yaw_value>35) || (yaw_value<-35)) {
+          power = 0;
+          Serial.print(" B ");
+        } 
+        else if ((yaw_value<=35) && (yaw_value>15)) {
+          power = 254;
+          Serial.print(" C ");
+          } 
+        else if ((yaw_value>=-35) && (yaw_value<-15)) {
+          power = -254;
+          Serial.print(" D ");          
+        }
+
         if (power > 254){
             power = 254;
         } else if (power < -254) {
             power = -254;
         }
+
+        Serial.print(" ");
+        Serial.print(power);
 
         if (power > 0) {
             digitalWrite(DIR, LOW);
@@ -280,14 +310,15 @@ void loop() {
             power = -power;
             Serial.print("\tdir: G");
         }
-
-        if ((yaw_value>25) || (yaw_value<-25)) {
+        
+        /*else if ((yaw_value>-2) && (yaw_value<2)) {
             power = 0;
-        } else if ((yaw_value>-8) && (yaw_value<8)) {
-            power = 0;
-        }
+        }*/
+        prev_yaw=yaw_value;
         Serial.print("\tpow: ");
         Serial.print(power);
+        Serial.print("\tErr: ");
+        Serial.print(Err);
         
         analogWrite(PWM, power);
         Serial.println("");
