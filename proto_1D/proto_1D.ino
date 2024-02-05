@@ -130,7 +130,6 @@ float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 int prev_yaw=0;
 float Err=0;
-int power=0;
 int Errpow=0;
 
 // packet structure for InvenSense teapot demo
@@ -249,10 +248,26 @@ void setup() {
 // ===                    MAIN PROGRAM LOOP                     ===
 // ================================================================
 
+int yawValue = 0;
+int prevYawValue = 0;
+
+int err = 0;
+int deriv = 0;
+int integ = 0;
+
+int power = 0;
+
+unsigned long currentTime = millis();
+unsigned long previousTime = millis();
+unsigned long deltaT = 0;
+
+int KP = 25;
+int KI = 0;
+int KD = 45;
+
 void loop() {
     // if programming failed, don't try to do anything
     if (!dmpReady) return;
-    int32_t yaw_value = 0;
     while (true) {  
     // read a packet from FIFO
         if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet 
@@ -261,40 +276,57 @@ void loop() {
             mpu.dmpGetQuaternion(&q, fifoBuffer);
             mpu.dmpGetGravity(&gravity, &q);
             mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+            /*
             Serial.print("ypr\t");
             Serial.print(ypr[0] * 180/M_PI);
             Serial.print("\t");
             Serial.print(ypr[1] * 180/M_PI);
             Serial.print("\t");
             Serial.print(ypr[2] * 180/M_PI);
+            */
 
-            int32_t prec_yaw = yaw_value;
-            yaw_value = ypr[0]*180/M_PI;
-            int32_t power = (9)*254*yaw_value/(180/M_PI)-3*(yaw_value-prec_yaw);
-            Serial.print("\t");
+            yawValue = ypr[0]* 180/M_PI;
+
+            currentTime = millis();
+            deltaT = currentTime - previousTime;
+            previousTime = currentTime;
+
+            err = yawValue;
+            deriv = yawValue - prevYawValue;
+            integ = integ + yawValue * deltaT;
+
+            power = (KP*err + KI*integ + KD*deriv);
+
+            prevYawValue = yawValue;
+
+            Serial.print("\t pow:");
             Serial.print(power);
-            Serial.print("\t");
-            Serial.print(yaw_value);
-            
-            if (power > 254){
-                power = 254;
-            } else if (power < -254) {
-                power = -254;
-            }
+            Serial.print("\t yaw:");
+            Serial.print(yawValue);
+            Serial.print("\t err:");
+            Serial.print(err*KP);
+            Serial.print("\t deriv:");
+            Serial.print(deriv*KD);
+            Serial.print("\t integ:");
+            Serial.print(integ*KI);
 
-            if (power > 0) {
-                digitalWrite(DIR, HIGH);
-            } else {
+            
+            if (power > 255){
+                power = 255;
+            } else if (power < -255) {
+                power = -255;
+            }
+            
+            if (power >= 0) {
                 digitalWrite(DIR, LOW);
+            } else {
+                digitalWrite(DIR, HIGH);
                 power = -power;
             }
             
-            Serial.print("\t maxed\t");
-            Serial.print(power);
-
-            if ((yaw_value > -2) && (yaw_value < 2)) {
+            if ((yawValue > -2) && (yawValue < 2)) {
                 analogWrite(PWM, 0);
-            } else if ((yaw_value > -25) && (yaw_value < 25)) {
+            } else if ((yawValue > -35) && (yawValue < 35)) {
                 digitalWrite(BRAKE, HIGH);
                 analogWrite(PWM, power);
             } else {
