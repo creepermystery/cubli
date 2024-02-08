@@ -2,7 +2,9 @@
 #define DIR         4
 #define PWM        11
 #define START       8
-long temps=0;
+
+int temps=0;
+
 void Motor_control(int sp) {
   if (sp < 0) {
     digitalWrite(DIR, LOW);
