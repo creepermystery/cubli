@@ -72,18 +72,6 @@ MPU6050 mpu;
    digital I/O pin 2.
  * ========================================================================= */
 
-/* =========================================================================
-   NOTE: Arduino v1.0.1 with the Leonardo board generates a compile error
-   when using Serial.write(buf, len). The Teapot output uses this method.
-   The solution requires a modification to the Arduino USBAPI.h file, which
-   is fortunately simple, but annoying. This will be fixed in the next IDE
-   release. For more info, see these links:
-
-   http://arduino.cc/forum/index.php/topic,109987.0.html
-   http://code.google.com/p/arduino/issues/detail?id=958
- * ========================================================================= */
-
-
 // uncomment "OUTPUT_READABLE_YAWPITCHROLL" if you want to see the yaw/
 // pitch/roll angles (in degrees) calculated from the quaternions coming
 // from the FIFO. Note this also requires gravity vector calculations.
@@ -91,25 +79,10 @@ MPU6050 mpu;
 // more info, see: http://en.wikipedia.org/wiki/Gimbal_lock)
 #define OUTPUT_READABLE_YAWPITCHROLL
 
-// uncomment "OUTPUT_READABLE_REALACCEL" if you want to see acceleration
-// components with gravity removed. This acceleration reference frame is
-// not compensated for orientation, so +X is always +X according to the
-// sensor, just without the effects of gravity. If you want acceleration
-// compensated for orientation, us OUTPUT_READABLE_WORLDACCEL instead.
-//#define OUTPUT_READABLE_REALACCEL
-
-// uncomment "OUTPUT_READABLE_WORLDACCEL" if you want to see acceleration
-// components with gravity removed and adjusted for the world frame of
-// reference (yaw is relative to initial orientation, since no magnetometer
-// is present in this case). Could be quite handy in some cases.
-//#define OUTPUT_READABLE_WORLDACCEL
-
-#define BRAKE 7
 #define PWM 3
 #define DIR 4
-#define START 8
+
 #define INTERRUPT_PIN 2  // use pin 2 on Arduino Uno & most boards
-#define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
 bool blinkState = false;
 
 // MPU control/status vars
@@ -126,33 +99,30 @@ VectorInt16 aa;         // [x, y, z]            accel sensor measurements
 VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
 VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
 VectorFloat gravity;    // [x, y, z]            gravity vector
+
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-int prev_yaw=0;
-float Err=0;
-int Errpow=0;
-
-// packet structure for InvenSense teapot demo
-uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\n' };
-
-
 
 // ================================================================
 // ===               INTERRUPT DETECTION ROUTINE                ===
 // ================================================================
 
 volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
-void dmpDataReady() {
+void dmpDataReady()
+{
     mpuInterrupt = true;
 }
-
-
 
 // ================================================================
 // ===                      INITIAL SETUP                       ===
 // ================================================================
 
-void setup() {
+int prev_yaw = 0;
+float Err = 0;
+int Errpow = 0;
+
+void setup()
+{
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
@@ -162,8 +132,6 @@ void setup() {
     #endif
 
     // initialize serial communication
-    // (115200 chosen because it is required for Teapot Demo output, but it's
-    // really up to you depending on your project)
     Serial.begin(9600);
     while (!Serial); // wait for Leonardo enumeration, others continue immediately
 
@@ -232,24 +200,13 @@ void setup() {
     }
 
     // configure LED for output
-    pinMode(LED_PIN, OUTPUT);
     pinMode(PWM, OUTPUT);
-    pinMode(BRAKE, OUTPUT);
     pinMode(DIR, OUTPUT);
-    pinMode(START, OUTPUT);
-
-    digitalWrite(BRAKE, HIGH);
-    digitalWrite(START, HIGH);
 }
 
 
-
-// ================================================================
-// ===                    MAIN PROGRAM LOOP                     ===
-// ================================================================
-
 int yawValue = 0;
-int prevYawValue = 0;
+int previousYawValue = 0;
 
 int err = 0;
 int deriv = 0;
@@ -265,13 +222,15 @@ int KP = 25;
 int KI = 0;
 int KD = 45;
 
-void loop() {
+void loop()
+{
     // if programming failed, don't try to do anything
     if (!dmpReady) return;
-    while (true) {  
+    while (true)
+    {  
     // read a packet from FIFO
-        if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet 
-
+        if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer))
+        { // Get the Latest packet 
             // display Euler angles in degrees
             mpu.dmpGetQuaternion(&q, fifoBuffer);
             mpu.dmpGetGravity(&gravity, &q);
@@ -292,12 +251,12 @@ void loop() {
             previousTime = currentTime;
 
             err = yawValue;
-            deriv = yawValue - prevYawValue;
+            deriv = yawValue - previousYawValue;
             integ = integ + yawValue * deltaT;
 
             power = (KP*err + KI*integ + KD*deriv);
 
-            prevYawValue = yawValue;
+            previousYawValue = yawValue;
 
             Serial.print("\t pow:");
             Serial.print(power);
@@ -311,27 +270,19 @@ void loop() {
             Serial.print(integ*KI);
 
             
-            if (power > 255){
-                power = 255;
-            } else if (power < -255) {
-                power = -255;
-            }
+            if (power > 255) power = 255;
+            else if (power < -255) power = -255;
             
-            if (power >= 0) {
-                digitalWrite(DIR, LOW);
-            } else {
+            if (power >= 0) digitalWrite(DIR, LOW);
+            else
+            {
                 digitalWrite(DIR, HIGH);
                 power = -power;
             }
             
-            if ((yawValue > -2) && (yawValue < 2)) {
-                analogWrite(PWM, 0);
-            } else if ((yawValue > -35) && (yawValue < 35)) {
-                digitalWrite(BRAKE, HIGH);
-                analogWrite(PWM, power);
-            } else {
-                analogWrite(PWM, 0);
-            }
+            if ((yawValue > -2) && (yawValue < 2)) analogWrite(PWM, 0);
+            else if ((yawValue > -35) && (yawValue < 35)) analogWrite(PWM, power);
+            else analogWrite(PWM, 0);
             
             Serial.println("");
         }
