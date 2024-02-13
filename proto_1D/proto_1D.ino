@@ -83,7 +83,6 @@ MPU6050 mpu;
 #define DIR 4
 
 #define INTERRUPT_PIN 2  // use pin 2 on Arduino Uno & most boards
-bool blinkState = false;
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -116,10 +115,6 @@ void dmpDataReady()
 // ================================================================
 // ===                      INITIAL SETUP                       ===
 // ================================================================
-
-int prev_yaw = 0;
-float Err = 0;
-int Errpow = 0;
 
 void setup()
 {
@@ -199,7 +194,7 @@ void setup()
         Serial.println(F(")"));
     }
 
-    // configure LED for output
+    // configure outputs
     pinMode(PWM, OUTPUT);
     pinMode(DIR, OUTPUT);
 }
@@ -226,65 +221,61 @@ void loop()
 {
     // if programming failed, don't try to do anything
     if (!dmpReady) return;
-    while (true)
-    {  
     // read a packet from FIFO
-        if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer))
-        { // Get the Latest packet 
-            // display Euler angles in degrees
-            mpu.dmpGetQuaternion(&q, fifoBuffer);
-            mpu.dmpGetGravity(&gravity, &q);
-            mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-            /*
-            Serial.print("ypr\t");
-            Serial.print(ypr[0] * 180/M_PI);
-            Serial.print("\t");
-            Serial.print(ypr[1] * 180/M_PI);
-            Serial.print("\t");
-            Serial.print(ypr[2] * 180/M_PI);
-            */
+    if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) // Get the Latest packet 
+    {
+        mpu.dmpGetQuaternion(&q, fifoBuffer);
+        mpu.dmpGetGravity(&gravity, &q);
+        mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+        /*
+        // Display angles in degrees
+        Serial.print("ypr\t");
+        Serial.print(ypr[0] * 180/M_PI);
+        Serial.print("\t");
+        Serial.print(ypr[1] * 180/M_PI);
+        Serial.print("\t");
+        Serial.print(ypr[2] * 180/M_PI);
+        */
 
-            yawValue = ypr[0]* 180/M_PI;
+        yawValue = ypr[0] * 180/M_PI;
 
-            currentTime = millis();
-            deltaT = currentTime - previousTime;
-            previousTime = currentTime;
+        currentTime = millis();
+        deltaT = currentTime - previousTime;
+        previousTime = currentTime;
 
-            err = yawValue;
-            deriv = yawValue - previousYawValue;
-            integ = integ + yawValue * deltaT;
+        err = yawValue;
+        deriv = yawValue - previousYawValue;
+        integ = integ + yawValue * deltaT;
 
-            power = (KP*err + KI*integ + KD*deriv);
+        power = (KP*err + KI*integ + KD*deriv);
 
-            previousYawValue = yawValue;
+        previousYawValue = yawValue;
 
-            Serial.print("\t pow:");
-            Serial.print(power);
-            Serial.print("\t yaw:");
-            Serial.print(yawValue);
-            Serial.print("\t err:");
-            Serial.print(err*KP);
-            Serial.print("\t deriv:");
-            Serial.print(deriv*KD);
-            Serial.print("\t integ:");
-            Serial.print(integ*KI);
+        Serial.print("\t pow:");
+        Serial.print(power);
+        Serial.print("\t yaw:");
+        Serial.print(yawValue);
+        Serial.print("\t err:");
+        Serial.print(err*KP);
+        Serial.print("\t deriv:");
+        Serial.print(deriv*KD);
+        Serial.print("\t integ:");
+        Serial.print(integ*KI);
 
-            
-            if (power > 255) power = 255;
-            else if (power < -255) power = -255;
-            
-            if (power >= 0) digitalWrite(DIR, LOW);
-            else
-            {
-                digitalWrite(DIR, HIGH);
-                power = -power;
-            }
-            
-            if ((yawValue > -2) && (yawValue < 2)) analogWrite(PWM, 0);
-            else if ((yawValue > -35) && (yawValue < 35)) analogWrite(PWM, power);
-            else analogWrite(PWM, 0);
-            
-            Serial.println("");
+        
+        if (power > 255) power = 255;
+        else if (power < -255) power = -255;
+        
+        if (power >= 0) digitalWrite(DIR, LOW);
+        else
+        {
+            digitalWrite(DIR, HIGH);
+            power = -power;
         }
+        
+        if ((yawValue > -35) && (yawValue < 35)) analogWrite(PWM, power);
+        else analogWrite(PWM, 0);
+                
+        Serial.println("");
     }
 }
