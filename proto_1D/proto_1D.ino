@@ -227,6 +227,7 @@ void loop()
         mpu.dmpGetQuaternion(&q, fifoBuffer);
         mpu.dmpGetGravity(&gravity, &q);
         mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+
         /*
         // Display angles in degrees
         Serial.print("ypr\t");
@@ -237,19 +238,24 @@ void loop()
         Serial.print(ypr[2] * 180/M_PI);
         */
 
-        yawValue = ypr[0] * 180/M_PI;
+        yawValue = ypr[0] * 180/M_PI; // On récupère le lacet
 
-        currentTime = millis();
+        currentTime = millis();                 // On remet les variables temporelles en place
         deltaT = currentTime - previousTime;
         previousTime = currentTime;
 
-        err = yawValue;
-        deriv = yawValue - previousYawValue;
-        integ = integ + yawValue * deltaT;
+        // On utilise un filtre pour éviter une partie des hallucinations du MPU6050
+        if (previousYawValue - yawValue > 20);
+        else
+        {
+            err = yawValue;                          // On prépare les variables du PID
+            deriv = yawValue - previousYawValue;
+            integ = integ + yawValue * deltaT;
 
-        power = (KP*err + KI*integ + KD*deriv);
+            power = (KP*err + KI*integ + KD*deriv);  // On calcule le PWM
 
-        previousYawValue = yawValue;
+            previousYawValue = yawValue;
+        }
 
         Serial.print("\t pow:");
         Serial.print(power);
@@ -261,11 +267,12 @@ void loop()
         Serial.print(deriv*KD);
         Serial.print("\t integ:");
         Serial.print(integ*KI);
-
         
+        // Capper le PWM à 255
         if (power > 255) power = 255;
         else if (power < -255) power = -255;
         
+        // Si le PWM est négatif, inverser la direction du moteur
         if (power >= 0) digitalWrite(DIR, LOW);
         else
         {
@@ -273,6 +280,7 @@ void loop()
             power = -power;
         }
         
+        // Arrêter le moteur si le cubli est tombé
         if ((yawValue > -35) && (yawValue < 35)) analogWrite(PWM, power);
         else analogWrite(PWM, 0);
                 
