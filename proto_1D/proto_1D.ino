@@ -253,7 +253,7 @@ int prevYawValue = 0;
 
 int err = 0;
 int deriv = 0;
-int integ = 0;
+long integ = 0;
 
 int power = 0;
 
@@ -261,9 +261,9 @@ unsigned long currentTime = millis();
 unsigned long previousTime = millis();
 unsigned long deltaT = 0;
 
-int KP = 25;
-int KI = 0;
-int KD = 45;
+int KP = 15;
+float KI = 0.00000;
+int KD = 20;
 
 void loop() {
     // if programming failed, don't try to do anything
@@ -293,7 +293,7 @@ void loop() {
 
             err = yawValue;
             deriv = yawValue - prevYawValue;
-            integ = integ + yawValue * deltaT;
+            integ = integ + err * deltaT;
 
             power = (KP*err + KI*integ + KD*deriv);
 
