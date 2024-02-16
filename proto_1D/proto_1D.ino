@@ -200,12 +200,12 @@ void setup()
 }
 
 
-int yawValue = 0;
-int previousYawValue = 0;
+float yawValue = 0;
+float previousYawValue = 0;
 
-int err = 0;
-int deriv = 0;
-int integ = 0;
+float err = 0;
+float deriv = 0;
+float integ = 0;
 
 int power = 0;
 
@@ -213,9 +213,11 @@ unsigned long currentTime = millis();
 unsigned long previousTime = millis();
 unsigned long deltaT = 0;
 
-int KP = 25;
-int KI = 0;
-int KD = 45;
+float KP = 15;
+float KI = 0;
+float KD = 90;
+
+int possibleHallucination = 0;
 
 void loop()
 {
@@ -245,7 +247,7 @@ void loop()
         previousTime = currentTime;
 
         // On utilise un filtre pour éviter une partie des hallucinations du MPU6050
-        if (previousYawValue - yawValue > 20);
+        if (abs(possibleHallucination - yawValue) > 20);
         else
         {
             err = yawValue;                          // On prépare les variables du PID
@@ -257,16 +259,12 @@ void loop()
             previousYawValue = yawValue;
         }
 
+        possibleHallucination = yawValue;
+
         Serial.print("\t pow:");
         Serial.print(power);
         Serial.print("\t yaw:");
         Serial.print(yawValue);
-        Serial.print("\t err:");
-        Serial.print(err*KP);
-        Serial.print("\t deriv:");
-        Serial.print(deriv*KD);
-        Serial.print("\t integ:");
-        Serial.print(integ*KI);
         
         // Capper le PWM à 255
         if (power > 255) power = 255;
@@ -279,7 +277,10 @@ void loop()
             digitalWrite(DIR, HIGH);
             power = -power;
         }
-        
+
+        Serial.print("\t pow:");
+        Serial.print(power);
+
         // Arrêter le moteur si le cubli est tombé
         if ((yawValue > -35) && (yawValue < 35)) analogWrite(PWM, power);
         else analogWrite(PWM, 0);
