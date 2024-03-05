@@ -10,9 +10,14 @@ void setup() {
   pinMode(START, OUTPUT);
   pinMode(DIR, OUTPUT);
 
-  analogWrite(PWM, 20);
+  analogWrite(PWM, 100);
   delay(2000);
 }
 
 void loop() {
+    delay(1000);
+    digitalWrite(DIR, HIGH);
+
+    delay(1000);
+    digitalWrite(DIR, LOW);
 }

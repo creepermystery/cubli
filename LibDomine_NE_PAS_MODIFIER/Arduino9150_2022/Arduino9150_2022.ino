@@ -18,18 +18,16 @@ bool newRoll = false;
 
 int pos = 1500;
 
-void setup() {
-  // put your setup code here, to run once:
+void setup()
+{
   Serial.begin(115200);
-  //Wire.setSDA(D4);
-  //Wire.setSCL(D5);
   Wire.begin();
   delay(1000);
   MPU_N.init(MPU_UPDATE_RATE);   
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+void loop()
+{
   if (MPU_N.read())
   { 
     roll = MPU_N.m_fusedEulerPose[VEC3_X] * RAD_TO_DEGREE;
