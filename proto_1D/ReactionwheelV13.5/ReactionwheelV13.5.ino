@@ -100,9 +100,6 @@ int loopcount; // Counter var for D13 onboard LED flash evey 1 second
 
 void setup() 
 {
-
-
-
   // PWM.h Setup
   InitTimersSafe();
   // The Nidec 24H677 BLDC Motor requires a PWM frequency of 20KHz to 25KHz

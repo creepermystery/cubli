@@ -38,7 +38,7 @@ void angle_setup() {
   GyZ_offset = GyZ_offset_sum >> 10;
   Serial.print("GyZ offset value = "); Serial.println(GyZ_offset);
   beep();
-  
+
   for (int i = 0; i < 1024; i++) {
     angle_calc();
     //Serial.println(GyY);
@@ -52,19 +52,19 @@ void angle_setup() {
 }
 
 void angle_calc() {
-  
+
   // read raw accel/gyro measurements from device
   Wire.beginTransmission(MPU6050);
   Wire.write(0x45);
   Wire.endTransmission(false);
-  Wire.requestFrom(MPU6050, 6, true);  
+  Wire.requestFrom(MPU6050, 6, true);
   GyY = Wire.read() << 8 | Wire.read(); // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
   GyZ = Wire.read() << 8 | Wire.read(); // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
 
   Wire.beginTransmission(MPU6050);
-  Wire.write(0x3B);                  
+  Wire.write(0x3B);
   Wire.endTransmission(false);
-  Wire.requestFrom(MPU6050, 6, true);  
+  Wire.requestFrom(MPU6050, 6, true);
   AcX = Wire.read() << 8 | Wire.read(); // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
   AcY = Wire.read() << 8 | Wire.read(); // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
   AcZ = Wire.read() << 8 | Wire.read(); // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
@@ -77,7 +77,7 @@ void angle_calc() {
   robot_angleX = robot_angleX * Gyro_amount + Acc_angleX * (1.0 - Gyro_amount);
 
   robot_angleY += GyY * loop_time / 1000 / 65.536;
-  Acc_angleY = -atan2(AcZ, -AcX) * 57.2958; 
+  Acc_angleY = -atan2(AcZ, -AcX) * 57.2958;
   robot_angleY = robot_angleY * Gyro_amount + Acc_angleY * (1.0 - Gyro_amount);
 
   angleX = robot_angleX;
@@ -103,15 +103,15 @@ void angle_calc() {
 }
 
 void XY_to_threeWay(float pwm_X, float pwm_Y) {
-  
-  int16_t m1 = round(0.5 * pwm_X - 0.75 * pwm_Y); 
+
+  int16_t m1 = round(0.5 * pwm_X - 0.75 * pwm_Y);
   int16_t m2 = round(0.5 * pwm_X + 0.75 * pwm_Y);
-  int16_t m3 = pwm_X;  
+  int16_t m3 = pwm_X;
 
   m1 = constrain(m1, -255, 255);
   m2 = constrain(m2, -255, 255);
   m3 = constrain(m3, -255, 255);
-  
+
   Motor1_control(-m1);
   Motor2_control(-m2);
   Motor3_control(m3);
@@ -166,7 +166,7 @@ int Tuning() {
       if (cmd == '+')    sGain += 0.005;
       if (cmd == '-')    sGain -= 0.005;
       printValues();
-      break;  
+      break;
     case 'b':
       if (cmd == '+')    bat_divider += 1;
       if (cmd == '-')    bat_divider -= 1;
@@ -209,7 +209,7 @@ int Tuning() {
           beep();
         }
       }
-      break;                
+      break;
    }
 }
 
