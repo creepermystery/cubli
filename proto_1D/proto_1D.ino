@@ -265,7 +265,7 @@ void loop() {
 
             int32_t prec_yaw = yaw_value;
             yaw_value = ypr[0]*180/M_PI;
-            int32_t power = (9)*254*yaw_value/(180/M_PI)-3*(yaw_value-prec_yaw);
+            int32_t power = 10*254*yaw_value/(180/M_PI)-5*(yaw_value-prec_yaw);
             Serial.print("\t");
             Serial.print(power);
             Serial.print("\t");
