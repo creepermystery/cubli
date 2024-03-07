@@ -48,6 +48,7 @@ THE SOFTWARE.
 // for both classes must be in the include path of your project
 #include "I2Cdev.h"
 
+
 #include "MPU6050_6Axis_MotionApps20.h"
 //#include "MPU6050.h" // not necessary if using MotionApps include file
 
@@ -71,18 +72,6 @@ MPU6050 mpu;
    digital I/O pin 2.
  * ========================================================================= */
 
-/* =========================================================================
-   NOTE: Arduino v1.0.1 with the Leonardo board generates a compile error
-   when using Serial.write(buf, len). The Teapot output uses this method.
-   The solution requires a modification to the Arduino USBAPI.h file, which
-   is fortunately simple, but annoying. This will be fixed in the next IDE
-   release. For more info, see these links:
-
-   http://arduino.cc/forum/index.php/topic,109987.0.html
-   http://code.google.com/p/arduino/issues/detail?id=958
- * ========================================================================= */
-
-
 // uncomment "OUTPUT_READABLE_YAWPITCHROLL" if you want to see the yaw/
 // pitch/roll angles (in degrees) calculated from the quaternions coming
 // from the FIFO. Note this also requires gravity vector calculations.
@@ -90,26 +79,10 @@ MPU6050 mpu;
 // more info, see: http://en.wikipedia.org/wiki/Gimbal_lock)
 #define OUTPUT_READABLE_YAWPITCHROLL
 
-// uncomment "OUTPUT_READABLE_REALACCEL" if you want to see acceleration
-// components with gravity removed. This acceleration reference frame is
-// not compensated for orientation, so +X is always +X according to the
-// sensor, just without the effects of gravity. If you want acceleration
-// compensated for orientation, us OUTPUT_READABLE_WORLDACCEL instead.
-//#define OUTPUT_READABLE_REALACCEL
-
-// uncomment "OUTPUT_READABLE_WORLDACCEL" if you want to see acceleration
-// components with gravity removed and adjusted for the world frame of
-// reference (yaw is relative to initial orientation, since no magnetometer
-// is present in this case). Could be quite handy in some cases.
-//#define OUTPUT_READABLE_WORLDACCEL
-
-#define BRAKE 7
 #define PWM 3
 #define DIR 4
-#define START 8
+
 #define INTERRUPT_PIN 2  // use pin 2 on Arduino Uno & most boards
-#define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
-bool blinkState = false;
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -125,30 +98,26 @@ VectorInt16 aa;         // [x, y, z]            accel sensor measurements
 VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
 VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
 VectorFloat gravity;    // [x, y, z]            gravity vector
+
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-
-// packet structure for InvenSense teapot demo
-uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\n' };
-
-
 
 // ================================================================
 // ===               INTERRUPT DETECTION ROUTINE                ===
 // ================================================================
 
 volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
-void dmpDataReady() {
+void dmpDataReady()
+{
     mpuInterrupt = true;
 }
-
-
 
 // ================================================================
 // ===                      INITIAL SETUP                       ===
 // ================================================================
 
-void setup() {
+void setup()
+{
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
@@ -158,8 +127,6 @@ void setup() {
     #endif
 
     // initialize serial communication
-    // (115200 chosen because it is required for Teapot Demo output, but it's
-    // really up to you depending on your project)
     Serial.begin(9600);
     while (!Serial); // wait for Leonardo enumeration, others continue immediately
 
@@ -227,76 +194,97 @@ void setup() {
         Serial.println(F(")"));
     }
 
-    // configure LED for output
-    pinMode(LED_PIN, OUTPUT);
+    // configure outputs
     pinMode(PWM, OUTPUT);
-    pinMode(BRAKE, OUTPUT);
     pinMode(DIR, OUTPUT);
-    pinMode(START, OUTPUT);
-
-    digitalWrite(BRAKE, HIGH);
-    digitalWrite(START, HIGH);
 }
 
 
+float yawValue = 0;
+float previousYawValue = 0;
 
-// ================================================================
-// ===                    MAIN PROGRAM LOOP                     ===
-// ================================================================
+float err = 0;
+float deriv = 0;
+float integ = 0;
 
-void loop() {
+int power = 0;
+
+unsigned long currentTime = millis();
+unsigned long previousTime = millis();
+unsigned long deltaT = 0;
+
+float KP = 15;
+float KI = 0;
+float KD = 90;
+
+int possibleHallucination = 0;
+
+void loop()
+{
     // if programming failed, don't try to do anything
     if (!dmpReady) return;
-    int32_t yaw_value = 0;
-    while (true) {  
     // read a packet from FIFO
-        if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet 
+    if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) // Get the Latest packet 
+    {
+        mpu.dmpGetQuaternion(&q, fifoBuffer);
+        mpu.dmpGetGravity(&gravity, &q);
+        mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
-            // display Euler angles in degrees
-            mpu.dmpGetQuaternion(&q, fifoBuffer);
-            mpu.dmpGetGravity(&gravity, &q);
-            mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-            Serial.print("ypr\t");
-            Serial.print(ypr[0] * 180/M_PI);
-            Serial.print("\t");
-            Serial.print(ypr[1] * 180/M_PI);
-            Serial.print("\t");
-            Serial.print(ypr[2] * 180/M_PI);
+        /*
+        // Display angles in degrees
+        Serial.print("ypr\t");
+        Serial.print(ypr[0] * 180/M_PI);
+        Serial.print("\t");
+        Serial.print(ypr[1] * 180/M_PI);
+        Serial.print("\t");
+        Serial.print(ypr[2] * 180/M_PI);
+        */
 
-            int32_t prec_yaw = yaw_value;
-            yaw_value = ypr[0]*180/M_PI;
-            int32_t power = 10*254*yaw_value/(180/M_PI)-5*(yaw_value-prec_yaw);
-            Serial.print("\t");
-            Serial.print(power);
-            Serial.print("\t");
-            Serial.print(yaw_value);
-            
-            if (power > 254){
-                power = 254;
-            } else if (power < -254) {
-                power = -254;
-            }
+        yawValue = ypr[0] * 180/M_PI; // On récupère le lacet
 
-            if (power > 0) {
-                digitalWrite(DIR, HIGH);
-            } else {
-                digitalWrite(DIR, LOW);
-                power = -power;
-            }
-            
-            Serial.print("\t maxed\t");
-            Serial.print(power);
+        currentTime = millis();                 // On remet les variables temporelles en place
+        deltaT = currentTime - previousTime;
+        previousTime = currentTime;
 
-            if ((yaw_value > -2) && (yaw_value < 2)) {
-                analogWrite(PWM, 0);
-            } else if ((yaw_value > -25) && (yaw_value < 25)) {
-                digitalWrite(BRAKE, HIGH);
-                analogWrite(PWM, power);
-            } else {
-                analogWrite(PWM, 0);
-            }
-            
-            Serial.println("");
+        // On utilise un filtre pour éviter une partie des hallucinations du MPU6050
+        if (abs(possibleHallucination - yawValue) > 20);
+        else
+        {
+            err = yawValue;                          // On prépare les variables du PID
+            deriv = yawValue - previousYawValue;
+            integ = integ + yawValue * deltaT;
+
+            power = (KP*err + KI*integ + KD*deriv);  // On calcule le PWM
+
+            previousYawValue = yawValue;
         }
+
+        possibleHallucination = yawValue;
+
+        Serial.print("\t pow:");
+        Serial.print(power);
+        Serial.print("\t yaw:");
+        Serial.print(yawValue);
+        
+        // Capper le PWM à 255
+        if (power > 255) power = 255;
+        else if (power < -255) power = -255;
+        
+        // Si le PWM est négatif, inverser la direction du moteur
+        if (power >= 0) digitalWrite(DIR, LOW);
+        else
+        {
+            digitalWrite(DIR, HIGH);
+            power = -power;
+        }
+
+        Serial.print("\t pow:");
+        Serial.print(power);
+
+        // Arrêter le moteur si le cubli est tombé
+        if ((yawValue > -35) && (yawValue < 35)) analogWrite(PWM, power);
+        else analogWrite(PWM, 0);
+                
+        Serial.println("");
     }
 }
