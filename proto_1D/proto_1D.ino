@@ -18,7 +18,6 @@ float timeStep = 0.01;
 float yaw, pitch, roll;
 float accRoll;
 float accRollInt;
-float rollPlusUn;
 bool newRoll = false;
 
 int pos = 1500;
@@ -42,16 +41,16 @@ float dterr = 0;
 float dtdterr = 0;
 float prev_dterr = 0;
 
-float power = 0;
+int power = 0;
 
 unsigned long currentTime = millis();
 unsigned long previousTime = millis();
 unsigned long deltaT = 0;
 
 
-float KP = 28;
-float KDD = 0.001;
-float KD = 200.0;
+float Kp = 3000.0;
+float Ki = 0.0;
+float Kd = 0.0;
 
 
 void loop()
@@ -78,7 +77,7 @@ void loop()
     dtdterr = (dterr-prev_dterr)/deltaT;
 
 
-    power = (KD*dterr + KP*err + KDD*dtdterr);  // On calcule le PWM
+    power = (Kp*dterr + Ki*err + Kd*dtdterr);  // On calcule le PWM
     Serial.print(err);
     Serial.print(", ");
     Serial.println(power);
