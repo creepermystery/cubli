@@ -38,8 +38,9 @@ void setup()
 float previousroll = 0;
 
 float err = 0;
-float deriv = 0;
-float integ = 0;
+float dterr = 0;
+float dtdterr = 0;
+float prev_dterr = 0;
 
 float power = 0;
 
@@ -49,7 +50,7 @@ unsigned long deltaT = 0;
 
 
 float KP = 28;
-float KI = 0.001;
+float KDD = 0.001;
 float KD = 200.0;
 
 
@@ -73,15 +74,16 @@ void loop()
 
 
     err = roll + 6.5;                          // On prépare les variables du PID
-    deriv = (err - previousroll)/deltaT;
-    integ = integ + err * deltaT;
+    dterr = (err - previousroll)/deltaT;
+    dtdterr = (dterr-prev_dterr)/deltaT;
 
-    power = (KP*err + KI*integ + KD*deriv);  // On calcule le PWM
- 
-   Serial.print(err);
+
+    power = (KD*dterr + KP*err + KDD*dtdterr);  // On calcule le PWM
+    Serial.print(err);
     Serial.print(", ");
     Serial.println(power);
     previousroll = err;
+    prev_dterr=dterr;
     
     // Capper le PWM à 255
     if (power > 255) power = 255;
