@@ -41,17 +41,17 @@ float err = 0;
 float deriv = 0;
 float integ = 0;
 
-int power = 0;
+float power = 0;
 
 unsigned long currentTime = millis();
 unsigned long previousTime = millis();
 unsigned long deltaT = 0;
 
-float KP = 27;
-float KI = 0;
-float KD = 80;
 
-int possibleHallucination = 0;
+float KP = 28;
+float KI = 0.001;
+float KD = 200.0;
+
 
 void loop()
 {
@@ -71,18 +71,17 @@ void loop()
     deltaT = currentTime - previousTime;
     previousTime = currentTime;
 
-    err = roll;                          // On prépare les variables du PID
-    deriv = (roll - previousroll)/deltaT;
-    integ = integ + roll * deltaT;
+
+    err = roll + 6.5;                          // On prépare les variables du PID
+    deriv = (err - previousroll)/deltaT;
+    integ = integ + err * deltaT;
 
     power = (KP*err + KI*integ + KD*deriv);  // On calcule le PWM
-
-    previousroll = roll;
-
-    Serial.print("\t pow:");
-    Serial.print(power);
-    Serial.print("\t roll:");
-    Serial.print(roll);
+ 
+   Serial.print(err);
+    Serial.print(", ");
+    Serial.println(power);
+    previousroll = err;
     
     // Capper le PWM à 255
     if (power > 255) power = 255;
@@ -96,11 +95,8 @@ void loop()
         power = -power;
     }
 
-    Serial.print("\t pow:");
-    Serial.print(power);
-
     // Arrêter le moteur si le cubli est tombé
-    if ((roll > -35.0) && (roll < 35.0)) analogWrite(PIN_PWM, power);
+    if ((err > -35.0) && (err < 35.0)) analogWrite(PIN_PWM, power);
     else analogWrite(PIN_PWM, 0);
             
     Serial.println("");
