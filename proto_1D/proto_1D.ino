@@ -48,9 +48,11 @@ unsigned long previousTime = millis();
 unsigned long deltaT = 0;
 
 
+
 float Kp = 3000.0;
 float Ki = 0.0;
 float Kd = 0.0;
+
 
 
 void loop()
@@ -78,9 +80,11 @@ void loop()
 
 
     power = (Kp*dterr + Ki*err + Kd*dtdterr);  // On calcule le PWM
+
     Serial.print(err);
     Serial.print(", ");
     Serial.println(power);
+
     previousroll = err;
     prev_dterr=dterr;
     
