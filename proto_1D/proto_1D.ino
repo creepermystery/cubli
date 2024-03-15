@@ -52,9 +52,9 @@ unsigned long previousTime = millis();
 unsigned long deltaT = 0;
 
 
-float Kp = 22.25; // 20.72
-float Ki = 21.0;  // 18.25
-float Kd = 18.0;   // 14.0
+float Kp = 20.72; // 20.72  22.25
+float Ki = 0;  // 18.25  21
+float Kd = 0;   // 14.0 18
 float Kt = 0;
 
 
@@ -103,8 +103,8 @@ void loop()
     // Arrêter le moteur si le cubli est tombé
     if ((err > -45.0) && (err < 45.0)) analogWrite(PIN_PWM, power);
     else analogWrite(PIN_PWM, 0);
-    /*
-    Serial.print(err);
+    
+    /*Serial.print(err);
     Serial.print("\t");
     Serial.print(dterr*Kp*100);
     Serial.print("\t");
@@ -113,7 +113,7 @@ void loop()
     Serial.print(dtdterr*Kd*3000);
     Serial.print("\t");
     Serial.print(power);
-    Serial.println("");
-    */
+    Serial.println("");*/
+    
     }
 }
