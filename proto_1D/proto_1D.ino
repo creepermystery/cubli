@@ -18,7 +18,6 @@ float timeStep = 0.01;
 float yaw, pitch, roll;
 float accRoll;
 float accRollInt;
-float rollPlusUn;
 bool newRoll = false;
 
 int pos = 1500;
