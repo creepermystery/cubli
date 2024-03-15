@@ -42,8 +42,10 @@ float dtdterr = 0.0;
 float prev_dterr = 0.0;
 
 int power = 0;
+
 int PowerSature=0;
 float PowerIntegral=0;
+
 
 unsigned long currentTime = millis();
 unsigned long previousTime = millis();
@@ -59,7 +61,7 @@ float Kt = 0;
 void loop()
 {
     if (MPU_N.read())
-  { 
+    { 
     timer = millis();
 
 
@@ -81,6 +83,7 @@ void loop()
 
     power = (Kp*100*dterr + PowerIntegral + Kd*3000*dtdterr);  // On calcule le PWM
     PowerIntegral=PowerIntegral+(Ki*err + Kt*(PowerSature - power) )/deltaT;
+
     previousroll = err;
     prev_dterr=dterr;
     
