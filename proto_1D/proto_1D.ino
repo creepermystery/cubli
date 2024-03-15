@@ -37,21 +37,21 @@ void setup()
 
 float previousroll = 0;
 
-float err = 0;
-float dterr = 0;
-float dtdterr = 0;
-float prev_dterr = 0;
+float err = 0.0;
+float dterr = 0.0;
+float dtdterr = 0.0;
+float prev_dterr = 0.0;
 
-float power = 0;
+int power = 0;
 
 unsigned long currentTime = millis();
 unsigned long previousTime = millis();
 unsigned long deltaT = 0;
 
 
-float Kp = 28;
-float Ki = 0.001;
-float Kd = 200.0;
+float Kp = 22.25; // 20.72
+float Ki = 21.0;  // 18.25
+float Kd = 18.0;   // 14.0
 
 
 void loop()
@@ -60,7 +60,6 @@ void loop()
   { 
     timer = millis();
 
-   
 
     // Calculate Pitch, Roll and Yaw
 
@@ -73,16 +72,12 @@ void loop()
     previousTime = currentTime;
 
 
-    err = roll + 6.5;                          // On prépare les variables du PID
+    err = roll + 7.7;                          // On prépare les variables du PID
     dterr = (err - previousroll)/deltaT;
     dtdterr = (dterr-prev_dterr)/deltaT;
 
 
-    power = (Kp*dterr + Ki*err + Kd*dtdterr);  // On calcule le 
-    
-    Serial.print(err);
-    Serial.print(", ");
-    Serial.println(power);
+    power = (Kp*100*dterr + Ki/10*err + Kd*3000*dtdterr);  // On calcule le PWM
 
     previousroll = err;
     prev_dterr=dterr;
@@ -92,19 +87,27 @@ void loop()
     else if (power < -255) power = -255;
     
     // Si le PWM est négatif, inverser la PIN_direction du moteur
-    if (power >= 0) digitalWrite(PIN_DIR, HIGH);
+    if (power >= 0) digitalWrite(PIN_DIR, LOW);
     else
     {
-        digitalWrite(PIN_DIR, LOW);
+        digitalWrite(PIN_DIR, HIGH);
         power = -power;
     }
 
     // Arrêter le moteur si le cubli est tombé
-    if ((err > -35.0) && (err < 35.0)) analogWrite(PIN_PWM, power);
+    if ((err > -45.0) && (err < 45.0)) analogWrite(PIN_PWM, power);
     else analogWrite(PIN_PWM, 0);
-            
+    /*
+    Serial.print(err);
+    Serial.print("\t");
+    Serial.print(dterr*Kp*100);
+    Serial.print("\t");
+    Serial.print(err*Ki/10);
+    Serial.print("\t");
+    Serial.print(dtdterr*Kd*3000);
+    Serial.print("\t");
+    Serial.print(power);
     Serial.println("");
-
-  
-  }
+    */
+    }
 }
