@@ -42,6 +42,7 @@ float dtdterr = 0.0;
 float prev_dterr = 0.0;
 
 int power = 0;
+int PowerSaturé=0;
 
 unsigned long currentTime = millis();
 unsigned long previousTime = millis();
@@ -76,21 +77,22 @@ void loop()
     dtdterr = (dterr-prev_dterr)/deltaT;
 
 
-    power = (Kp*100*dterr + Ki/10*err + Kd*3000*dtdterr);  // On calcule le PWM
-
+    power = (Kp*100*dterr + PowerIntegral + Kd*3000*dtdterr);  // On calcule le PWM
+    PowerIntegral=PowerIntegral+(Ki*err + Kt*(PowerSaturé - Power) )/deltaT
     previousroll = err;
     prev_dterr=dterr;
     
     // Capper le PWM à 255
-    if (power > 255) power = 255;
-    else if (power < -255) power = -255;
+    if (power > 255) PowerSaturé = 255;
+    else if (power < -255) PowerSaturé = -255;
+    else power=PowerSaturé;
     
     // Si le PWM est négatif, inverser la PIN_direction du moteur
-    if (power >= 0) digitalWrite(PIN_DIR, LOW);
+    if (PowerSaturé >= 0) digitalWrite(PIN_DIR, LOW);
     else
     {
         digitalWrite(PIN_DIR, HIGH);
-        power = -power;
+        PowerSaturé = -PowerSaturé;
     }
 
     // Arrêter le moteur si le cubli est tombé
