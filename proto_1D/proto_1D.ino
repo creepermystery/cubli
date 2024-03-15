@@ -43,8 +43,8 @@ float prev_dterr = 0.0;
 
 int power = 0;
 
-int PowerSature=0;
-float PowerIntegral=0;
+int PowerSature = 0;
+float PowerIntegral = 0;
 
 
 unsigned long currentTime = millis();
@@ -80,17 +80,16 @@ void loop()
     dterr = (err - previousroll)/deltaT;
     dtdterr = (dterr-prev_dterr)/deltaT;
 
-
+    PowerIntegral = PowerIntegral+(Ki/10*err + Kt*(PowerSature - power) )/deltaT;
     power = (Kp*100*dterr + PowerIntegral + Kd*3000*dtdterr);  // On calcule le PWM
-    PowerIntegral=PowerIntegral+(Ki*err + Kt*(PowerSature - power) )/deltaT;
 
     previousroll = err;
-    prev_dterr=dterr;
+    prev_dterr = dterr;
     
     // Capper le PWM à 255
     if (power > 255) PowerSature = 255;
     else if (power < -255) PowerSature = -255;
-    else power=PowerSature;
+    else power = PowerSature;
     
     // Si le PWM est négatif, inverser la PIN_direction du moteur
     if (PowerSature >= 0) digitalWrite(PIN_DIR, LOW);
@@ -101,10 +100,11 @@ void loop()
     }
 
     // Arrêter le moteur si le cubli est tombé
-    if ((err > -45.0) && (err < 45.0)) analogWrite(PIN_PWM, power);
+    if ((err > -45.0) && (err < 45.0)) analogWrite(PIN_PWM, PowerSature);
     else analogWrite(PIN_PWM, 0);
     
-    /*Serial.print(err);
+    /*
+    Serial.print(err);
     Serial.print("\t");
     Serial.print(dterr*Kp*100);
     Serial.print("\t");
@@ -113,7 +113,7 @@ void loop()
     Serial.print(dtdterr*Kd*3000);
     Serial.print("\t");
     Serial.print(power);
-    Serial.println("");*/
-    
+    Serial.println("");
+    */    
     }
 }
