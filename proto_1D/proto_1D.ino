@@ -50,13 +50,13 @@ float PowerIntegral = 0;
 unsigned long currentTime = millis();
 unsigned long previousTime = millis();
 unsigned long deltaT = 0;
+float Angle_Fixrate=0.0001;                 //0.0001
 
-
-float Kp = 20.72; // 20.72  22.25
-float Ki = 0;  // 18.25  21
-float Kd = 0;   // 14.0 18
-float Kt = 0;
-
+float Kp = 10.5;    //  20.72   22.25   16    10.5  10.5
+float Ki = 60;      //  18.25   21      60    60    60
+float Kd = 3;       //  14.0    18      0     1     3
+float Kt = 0;       // anglefixerate
+float Target_angle = 8.5;
 
 void loop()
 {
@@ -75,36 +75,48 @@ void loop()
     deltaT = currentTime - previousTime;
     previousTime = currentTime;
 
-
-    err = roll + 7.7;                          // On prépare les variables du PID
+        
+    if(err<0){
+        Target_angle+=Angle_Fixrate*deltaT;
+    }
+    else{
+        Target_angle-=Angle_Fixrate*deltaT;
+    }
+    
+    
+    err = roll + Target_angle;           //qualibration mpu    
+               // On prépare les variables du PID
     dterr = (err - previousroll)/deltaT;
     dtdterr = (dterr-prev_dterr)/deltaT;
 
-    PowerIntegral = PowerIntegral+(Ki/10*err + Kt*(PowerSature - power) )/deltaT;
-    power = (Kp*100*dterr + PowerIntegral + Kd*3000*dtdterr);  // On calcule le PWM
-
+    //PowerIntegral = PowerIntegral+(Ki/10*err + Kt*(PowerSature - power) )/deltaT;
+    //power = (Kp*100*dterr + PowerIntegral + Kd*3000*dtdterr);  // On calcule le PWM
+    power = (Kp*100*dterr + Ki/10*err + Kd*3000*dtdterr);
     previousroll = err;
     prev_dterr = dterr;
     
     // Capper le PWM à 255
-    if (power > 255) PowerSature = 255;
+   /* if (power > 255) PowerSature = 255;
     else if (power < -255) PowerSature = -255;
-    else power = PowerSature;
-    
+    else power = PowerSature;*/
+    if (power > 255) power = 255;
+    else if (power < -255) power = -255;
+
     // Si le PWM est négatif, inverser la PIN_direction du moteur
-    if (PowerSature >= 0) digitalWrite(PIN_DIR, LOW);
+    if (power >= 0) digitalWrite(PIN_DIR, LOW);
     else
     {
         digitalWrite(PIN_DIR, HIGH);
-        PowerSature = -PowerSature;
+        power = -power;
     }
 
+
     // Arrêter le moteur si le cubli est tombé
-    if ((err > -45.0) && (err < 45.0)) analogWrite(PIN_PWM, PowerSature);
+    if ((roll+8.5 > -45.0) && (roll+8.5 < 45.0)) analogWrite(PIN_PWM, power);
     else analogWrite(PIN_PWM, 0);
     
-    /*
-    Serial.print(err);
+    
+    /*Serial.print(err);
     Serial.print("\t");
     Serial.print(dterr*Kp*100);
     Serial.print("\t");
@@ -114,6 +126,6 @@ void loop()
     Serial.print("\t");
     Serial.print(power);
     Serial.println("");
-    */    
+    */
     }
 }
