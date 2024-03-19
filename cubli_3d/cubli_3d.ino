@@ -1,5 +1,3 @@
-
-
 #include <Wire.h>
 #include "MPU9150Lib.h"
 
@@ -21,15 +19,8 @@ float timeStep = 0.01;
 
 // Pitch, Roll and Yaw values
 float yaw, pitch, roll;
-float accRoll;
-float accRollInt;
-float rollPlusUn;
-bool newRoll = false;
 
-int pos = 1500;
-
-void setup()
-{
+void setup() {
     Serial.begin(115200);
     Wire.begin();
     delay(1000);
@@ -44,20 +35,23 @@ void setup()
     pinMode(PIN_DIR_C, OUTPUT);
 }
 
-float errRoll = 0;
-float derivRoll = 0;
-float integRoll = 0;
-float previousRoll = 0;
+float errRoll = 0.0;
+float derivRoll = 0.0;
+float integRoll = 0.0;
+float previousRoll = 0.0;
+float targetRoll = 0.0;
 
-float errPitch = 0;
-float derivPitch = 0;
-float integPitch = 0;
-float previousPitch = 0;
+float errPitch = 0.0;
+float derivPitch = 0.0;
+float integPitch = 0.0;
+float previousPitch = 0.0;
+float targetPitch = 0.0;
 
-float errYaw = 0;
-float derivYaw = 0;
-float integYaw = 0;
-float previousYaw = 0;
+float errYaw = 0.0;
+float derivYaw = 0.0;
+float integYaw = 0.0;
+float previousYaw = 0.0;
+float targetYaw = 0.0;
 
 int powerA = 0;
 int powerB = 0;
@@ -67,14 +61,15 @@ unsigned long currentTime = millis();
 unsigned long previousTime = millis();
 unsigned long deltaT = 0;
 
-float KP = 15;
-float KI = 0;
-float KD = 75;
+float angleFixRate = 0.0001; // 0.0001
 
-void loop()
-{
-    if (MPU_N.read())
-    {
+float Kp = 10.5;
+float Ki = 60;
+float Kd = 3;
+
+void loop() {
+    if (MPU_N.read()) {
+
         timer = millis();
 
         // Calculate Pitch, Roll and Yaw
@@ -87,21 +82,21 @@ void loop()
         deltaT = currentTime - previousTime;
         previousTime = currentTime;
 
-        errRoll = roll;                          // On prépare les variables du PID
+        errRoll = roll + targetRoll;                          // On prépare les variables du PID
         derivRoll = errRoll - previousRoll;
         integRoll = integRoll + errRoll * deltaT;
 
-        errPitch = pitch;
+        errPitch = pitch + targetPitch;
         derivPitch = errPitch - previousPitch;
         integPitch = integRoll + errPitch * deltaT;
 
-        errYaw = yaw;
+        errYaw = yaw + targetYaw;
         derivYaw = errYaw - previousYaw;
         integYaw = integRoll + errYaw * deltaT;
 
-        powerA = (KP*errRoll + KI*integRoll + KD*derivRoll);  // On calcule le PWM pour chaque moteur
-        powerB = (KP*errPitch + KI*integPitch + KD*derivPitch + KP*errYaw + KI*integYaw + KD*derivYaw)/2.0;
-        powerC = -(KP*errPitch + KI*integPitch + KD*derivPitch + KP*errYaw + KI*integYaw + KD*derivYaw)/2.0;
+        powerA = (Kp*errRoll + Ki*integRoll + Kd*derivRoll);  // On calcule le PWM pour chaque moteur
+        powerB = (Kp*errPitch + Ki*integPitch + Kd*derivPitch + Kp*errYaw + Ki*integYaw + Kd*derivYaw)/2.0;
+        powerC = -(Kp*errPitch + Ki*integPitch + Kd*derivPitch + Kp*errYaw + Ki*integYaw + Kd*derivYaw)/2.0;
 
         previousRoll = roll;
         previousPitch = pitch;
@@ -117,31 +112,33 @@ void loop()
 
         // Si le PWM est négatif, inverser la PIN_direction du moteur
         if (powerA >= 0) digitalWrite(PIN_DIR_A, HIGH);
-        else
-        {
-            digitalWrite(PIN_DIR_A, LOW);
+        else {
             powerA = -powerA;
+            digitalWrite(PIN_DIR_A, LOW);
         }
         if (powerB >= 0) digitalWrite(PIN_DIR_B, HIGH);
-        else
-        {
-            digitalWrite(PIN_DIR_B, LOW);
+        else {
             powerB = -powerB;
+            digitalWrite(PIN_DIR_B, LOW);
         }
         if (powerC >= 0) digitalWrite(PIN_DIR_C, HIGH);
-        else
-        {
-            digitalWrite(PIN_DIR_C, LOW);
+        else {
             powerC = -powerC;
+            digitalWrite(PIN_DIR_C, LOW);
         }
 
         // Arrêter le moteur si le cubli est tombé
-        if (abs(roll) > 35.0 || abs(pitch) > 35.0 || abs(yaw) > 35.0)
-        {
+        if (abs(roll) > 45.0 || abs(pitch) > 45.0 || abs(yaw) > 45.0) {
             analogWrite(PIN_PWM_A, 0);
             analogWrite(PIN_PWM_B, 0);
             analogWrite(PIN_PWM_C, 0);
         }
-        Serial.println("");
+
+        if (errRoll < 0) targetRoll += angleFixRate*deltaT;
+        else targetRoll -= angleFixRate*deltaT;
+        if (errPitch < 0) targetPitch += angleFixRate*deltaT;
+        else targetPitch -= angleFixRate*deltaT;
+        if (errYaw < 0) targetYaw += angleFixRate*deltaT;
+        else targetYaw -= angleFixRate*deltaT;
     }
 }
