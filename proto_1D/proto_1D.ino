@@ -48,9 +48,9 @@ unsigned long deltaT = 0;
 
 float angleFixRate = 0.0001; // 0.0001
 
-float Kp = 10.5;    //  20.72   22.25   16    10.5  10.5
-float Ki = 60;      //  18.25   21      60    60    60
-float Kd = 3;       //  14.0    18      0     1     3
+float Kp = 10.5;
+float Ki = 60;
+float Kd = 3;
 // float Kt = 0;
 float targetAngle = 0.0;
 
