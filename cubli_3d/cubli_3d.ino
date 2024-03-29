@@ -37,20 +37,23 @@ void setup() {
 
 float errRoll = 0.0;
 float derivRoll = 0.0;
-float integRoll = 0.0;
+float deriv2Roll = 0.0;
 float previousRoll = 0.0;
+float previousDerivRoll = 0.0;
 float targetRoll = 0.0;
 
 float errPitch = 0.0;
 float derivPitch = 0.0;
-float integPitch = 0.0;
+float deriv2Pitch = 0.0;
 float previousPitch = 0.0;
+float previousDerivPitch = 0.0;
 float targetPitch = 0.0;
 
 float errYaw = 0.0;
 float derivYaw = 0.0;
-float integYaw = 0.0;
+float deriv2Yaw = 0.0;
 float previousYaw = 0.0;
+float previousDerivYaw = 0.0;
 float targetYaw = 0.0;
 
 int powerA = 0;
@@ -82,21 +85,61 @@ void loop() {
         deltaT = currentTime - previousTime;
         previousTime = currentTime;
 
-        errRoll = roll + targetRoll;                          // On prépare les variables du PID
-        derivRoll = errRoll - previousRoll;
-        integRoll = integRoll + errRoll * deltaT;
-
+        errRoll = roll + targetRoll;
+        derivRoll = (errRoll - previousRoll)/deltaT;
+        deriv2Roll = (derivRoll - previousDerivRoll)/deltaT;
+        
         errPitch = pitch + targetPitch;
-        derivPitch = errPitch - previousPitch;
-        integPitch = integRoll + errPitch * deltaT;
-
+        derivPitch = (errPitch - previousPitch)/deltaT;
+        deriv2Pitch = (derivPitch - previousDerivPitch)/deltaT;
+        
         errYaw = yaw + targetYaw;
-        derivYaw = errYaw - previousYaw;
-        integYaw = integRoll + errYaw * deltaT;
+        derivYaw = (errYaw - previousYaw)/deltaT;
+        deriv2Yaw = (derivYaw - previousDerivYaw)/deltaT;
 
-        powerA = (Kp*errRoll + Ki*integRoll + Kd*derivRoll);  // On calcule le PWM pour chaque moteur
-        powerB = (Kp*errPitch + Ki*integPitch + Kd*derivPitch + Kp*errYaw + Ki*integYaw + Kd*derivYaw)/2.0;
-        powerC = -(Kp*errPitch + Ki*integPitch + Kd*derivPitch + Kp*errYaw + Ki*integYaw + Kd*derivYaw)/2.0;
+        powerA = (Kp*100.0*derivPitch + Ki/10.0*errPitch + Kd*3000.0*deriv2Pitch + Kp*100.0*derivYaw + Ki/10.0*errYaw + Kd*3000.0*deriv2Yaw)/2.0;
+        powerB = powerA;
+        powerC = powerA;
+
+        float factorA = 0.0;
+        float factorB = 0.0;
+        float factorC = 0.0;
+
+        if roll > -90 && roll < 90 {
+            factorA += abs(1-(roll+90)/180);
+            factorB -= abs(1-(roll+90)/180);
+        } else {
+            factorA -= abs(1-(roll+90)/180);
+            factorB += abs(1-(roll+90)/180);
+        }
+        if roll > -30 && roll < 150 {
+            factorA += abs(1-(roll+30)/180);
+            factorC -= abs(1-(roll+30)/180);
+        } else {
+            factorA -= abs(1-(roll+30)/180);
+            factorC += abs(1-(roll+30)/180);
+        }
+        if (roll > 30 && roll < 180) || (roll < -150 && roll > -180) {
+            if roll > 30 && roll < 180 {
+                factorB -= abs(1-(roll-30)/180);
+                factorC -= abs(1-(roll-30)/180);
+            } else {
+                factorB -= abs(1-(roll+180)/180);
+                factorC -= abs(1-(roll+180)/180);
+            }
+        } else {
+            if roll < 30 && roll > -180 {
+                factorB += abs(1-(roll-30)/180);
+                factorC += abs(1-(roll-30)/180);
+            } else {
+                factorB += abs(1-(roll+180)/180);
+                factorC += abs(1-(roll+180)/180);
+            }
+        }
+
+        powerA *= factorA;
+        powerB *= factorB;
+        powerC *= factorC;
 
         previousRoll = roll;
         previousPitch = pitch;
@@ -128,7 +171,7 @@ void loop() {
         }
 
         // Arrêter le moteur si le cubli est tombé
-        if (abs(roll) > 45.0 || abs(pitch) > 45.0 || abs(yaw) > 45.0) {
+        if (abs(pitch) > 45.0 || abs(yaw) > 45.0) {
             analogWrite(PIN_PWM_A, 0);
             analogWrite(PIN_PWM_B, 0);
             analogWrite(PIN_PWM_C, 0);
