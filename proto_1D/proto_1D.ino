@@ -77,7 +77,7 @@ void loop() {
         //PowerIntegral = PowerIntegral+(Ki/10*err + Kt*(PowerSature - power) )/deltaT;
         //power = (Kp*100*dtErr + PowerIntegral + Kd*3000*dtDtErr);  // On calcule le PWM
         power = (Kp*100*dtErr + Ki/10*err + Kd*3000*dtDtErr);
-        previousRoll = err;
+        previousRoll = err + targetAngle;
         previousDtErr = dtErr;
         
         // Capper le PWM à 255
